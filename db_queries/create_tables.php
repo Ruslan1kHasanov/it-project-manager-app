@@ -69,3 +69,5 @@ $query = $pdo->query('
         PRIMARY KEY(id_note),
         FOREIGN KEY(contributors_email) REFERENCES Users(email)
 )');
+
+//$query = $pdo->query('insert into users values ("ruslan_dopowehko@mail.ru", "Ruslan Khasanov", "Kn9Dm3^b4")');

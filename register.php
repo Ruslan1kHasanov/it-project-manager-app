@@ -1,18 +1,8 @@
 <?php
 
-class Response {
-    public bool $error;
-    public string $message;
-
-    function __construct(bool $error, string $message) {
-        $this->error = $error;
-        $this->message = $message;
-    }
-}
+require_once './Entities/Response.php';
 
 function register_new_user($user_data){
-
-    $hash_password = md5($user_data['password']);
 
     $user = 'root';
     $password = 'DansonU206';
@@ -24,7 +14,7 @@ function register_new_user($user_data){
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $query = 'insert into users values (?, ?, ?)';
-    $pdo->prepare($query)->execute([$user_data['email'], $user_data['login'], $hash_password]);
+    $pdo->prepare($query)->execute([$user_data['email'], $user_data['login'], $user_data['password']]);
 }
 
 $raw_data = file_get_contents('php://input');

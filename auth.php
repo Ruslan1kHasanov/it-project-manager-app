@@ -31,7 +31,3 @@ if ($verificationEmail === $email and $verificationPassword === $password){
 
 echo json_encode($response);
 exit();
-
-//foreach ($requested_data as $row) {
-//    echo $row['login']." ".$row['email'].PHP_EOL;
-//}

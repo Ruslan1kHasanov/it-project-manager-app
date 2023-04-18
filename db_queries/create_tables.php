@@ -29,7 +29,7 @@ $query = $pdo->query('
 
 $query = $pdo->query('
     CREATE TABLE  IF NOT EXISTS Projects (
-        id_project integer,
+        id_project integer AUTO_INCREMENT,
         proj_name varchar(63) NOT NULL,
         creator_email varchar(255) NOT NULL,
         date_of_creating DATE NOT NULL,

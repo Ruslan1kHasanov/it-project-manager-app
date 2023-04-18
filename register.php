@@ -1,31 +1,24 @@
 <?php
 
 require_once './Entities/Response.php';
+require_once 'config.php';
 
 function register_new_user($user_data){
-    $user = 'root';
-    $password = 'DansonU206';
-    $db = 'chatted_db';
-    $host = 'localhost';
-    $charset = 'utf8';
+    $conf = new Config();
 
-    $pdo = new PDO("mysql:host=$host;dbname=$db;cahrset=$charset", $user, $password);
+    $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;cahrset=$conf->charset", $conf->user, $conf->password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $crypto_password = md5($user_data['password']);
 
-    $query = 'insert into users values (?, ?, ?)';
+    $query = 'INSERT INTO users VALUES (?, ?, ?)';
     $pdo->prepare($query)->execute([$user_data['email'], $user_data['login'], $crypto_password]);
 }
 
 function is_email_in_use($email):bool{
-    $user = 'root';
-    $password = 'DansonU206';
-    $db = 'chatted_db';
-    $host = 'localhost';
-    $charset = 'utf8';
+    $conf = new Config();
 
-    $pdo = new PDO("mysql:host=$host;dbname=$db;cahrset=$charset", $user, $password);
+    $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;cahrset=$conf->charset", $conf->user, $conf->password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $requested_query = $pdo->prepare('SELECT email FROM Users WHERE email = ?');

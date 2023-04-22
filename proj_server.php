@@ -24,5 +24,8 @@ if ($requested_data['proj_name'] !== ''){
 }else{
     $response = new Response(true, "BAD_REQUEST_TO_DB");
 }
+header("Access-Control-Allow-Headers: X-Requested-With, content-type");
+header('Content-Type: application/json');
+
 echo json_encode($response);
 exit();

@@ -24,6 +24,7 @@ $query = $pdo->query('
         email varchar(255),
         login varchar(127) NOT NULL,
         password varchar(32) NOT NULL,
+        ava_url varchar(511) DEFAULT
         PRIMARY KEY(email)
 )');
 
@@ -41,7 +42,7 @@ $query = $pdo->query('
         id_project_list integer,
         id_project integer,
         admins_email varchar(255) NOT NULL,
-        contributors_email varchar(255),
+        contributor_email varchar(255),
         PRIMARY KEY(id_project_list),
         FOREIGN KEY(id_project) REFERENCES Projects(id_project)
 )');
@@ -65,9 +66,9 @@ $query = $pdo->query('
         full_text text,
         date_of_creating DATE NOT NULL,
         date_of_deadline DATE,
-        contributors_email varchar(255),
+        contributor_email varchar(255),
         PRIMARY KEY(id_note),
-        FOREIGN KEY(contributors_email) REFERENCES Users(email)
+        FOREIGN KEY(contributor_email) REFERENCES Projects_list(contributor_email)
 )');
 
 //$query = $pdo->query('insert into users values ("ruslan_dopowehko@mail.ru", "Ruslan Khasanov", "Kn9Dm3^b4")');

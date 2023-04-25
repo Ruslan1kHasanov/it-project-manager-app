@@ -11,7 +11,7 @@ function register_new_user($user_data){
 
     $crypto_password = md5($user_data['password']);
 
-    $query = 'INSERT INTO users VALUES (?, ?, ?)';
+    $query = 'INSERT INTO Users VALUES (?, ?, ?)';
     $pdo->prepare($query)->execute([$user_data['email'], $user_data['login'], $crypto_password]);
 }
 

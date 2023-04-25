@@ -16,12 +16,16 @@ function create_new_project($conf, $data){
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $requested_query = $pdo->prepare('
-        select proj_name, id_project from Projects
-        where id_project in (
-            select id_project from Projects_list
-                where contributor_email = ?
-        );'
+        insert into Projects
+        values (?, ?, ?, ?, ?);'
     );
+
+    $requested_query->execute([$data['proj_name'], $data['creator_email'], date('Y-m-d'),
+        $data['count_of_contributors'], $data['project_description'], ]);
+
+    $response = ($requested_query) ? new Response(false, "PROJECT_WERE_CREATE")
+                                    : new Response(true, "BAD_REQUEST_TO_DB");
+
 }
 
 function get_project_list($conf, $data){

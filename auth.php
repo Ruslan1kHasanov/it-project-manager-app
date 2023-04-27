@@ -1,7 +1,8 @@
 <?php
 
+require_once './tested.php';
 require_once './Entities/Response.php';
-require_once 'config.php';
+require_once './config.php';
 
 $conf = new Config();
 
@@ -21,9 +22,15 @@ $verificationEmail = $requested_data['email'] ?? '';
 $verificationPassword = $requested_data['password'] ?? '';
 
 if ($verificationEmail === $data['email'] and $verificationPassword === md5($data['password'])){
+    setcookie('token', create_new_token($conf, $data), time() + 60);
     $response = new Response(false, "AUTH_DONE");
 }else{
     $response = new Response(true, "WRONG_PASS_OR_EMAIL");
 }
 echo json_encode($response);
 exit();
+
+//{
+//    "user_email":"test@mail.com",
+//    "type":"GET_PROJECT_LIST"
+//}

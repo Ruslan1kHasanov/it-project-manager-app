@@ -6,7 +6,8 @@ $db = 'chatted_db';
 $host = 'localhost';
 $charset = 'utf8';
 
-function drop_tables($pdo){
+function drop_tables($pdo)
+{
     $pdo->query('drop table if exists Notes');
     $pdo->query('drop table if exists Components');
     $pdo->query('drop table if exists Projects_list');
@@ -17,7 +18,7 @@ function drop_tables($pdo){
 $pdo = new PDO("mysql:host=$host;dbname=$db;cahrset=$charset", $user, $password);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-drop_tables($pdo);
+//drop_tables($pdo);
 
 $query = $pdo->query('
     CREATE TABLE  IF NOT EXISTS Users (
@@ -33,7 +34,6 @@ $query = $pdo->query('
         proj_name varchar(63) NOT NULL,
         creator_email varchar(255) NOT NULL,
         date_of_creating DATE NOT NULL,
-        count_of_contributors integer NOT NULL,
         project_description text,
         PRIMARY KEY(id_project)
 )');
@@ -70,5 +70,14 @@ $query = $pdo->query('
         PRIMARY KEY(id_note),
         FOREIGN KEY(contributor_email) REFERENCES Users(email)
 )');
+
+
+$query = $pdo->query('
+    CREATE TABLE  IF NOT EXISTS Tokens (
+        token varchar(64),
+        date_of_creating DATE NOT NULL,
+        PRIMARY KEY(token)
+)');
+
 
 //$query = $pdo->query('insert into users values ("ruslan_dopowehko@mail.ru", "Ruslan Khasanov", "Kn9Dm3^b4")');

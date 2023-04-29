@@ -11,40 +11,69 @@ $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, JSON_UNESCAPED_UNICODE);
 $conf = new Config();
 
+function is_user_project_exists($pdo, $data): bool
+{
+    $requested_query = $pdo->prepare('
+        select proj_name, creator_email from Projects
+        where proj_name = ? and creator_email = ?;'
+    );
+    $requested_query->execute([$data['proj_name'], $data['creator_email']]);
+
+    $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
+//    print_r($requested_data);
+    if (gettype($requested_data) === "boolean"){
+        return false;
+    }
+    return true;
+}
+
 function create_new_project($conf, $data)
 {
-    $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;cahrset=$conf->charset", $conf->user, $conf->password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    try {
+        $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;cahrset=$conf->charset", $conf->user, $conf->password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $requested_query = $pdo->prepare('
+        if(is_user_project_exists($pdo, $data)){
+            return new Response(true, "PROJECT_ALREADY_EXISTS");
+        }
+
+        $requested_query = $pdo->prepare('
         insert into Projects (proj_name, creator_email, date_of_creating, project_description)
         values (?, ?, ?, ?);'
-    );
+        );
 
-    $requested_query->execute([$data['proj_name'], $data['creator_email'],
-        date('Y-m-d'), $data['project_description']]);
+        $requested_query->execute([$data['proj_name'], $data['creator_email'],
+            date('Y-m-d'), $data['project_description']]);
 
-    $requested_query = $pdo->prepare('
+        $requested_query = $pdo->prepare('
         select id_project, creator_email, proj_name from Projects
         where creator_email = ? and proj_name = ?;
     ');
 
-    $requested_query->execute([$data['creator_email'], $data['proj_name']]);
+        $requested_query->execute([$data['creator_email'], $data['proj_name']]);
 
-    $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
+        $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
 
-    $requested_query = $pdo->prepare('
+        $requested_query = $pdo->prepare('
         insert into Projects_list
         values (?, ?, ?);'
-    );
+        );
 
 //    print_r($requested_data);
+        $response_project_id = $requested_data['id_project'];
+        $response_project_name = $data['proj_name'];
 
-    $requested_query->execute([$requested_data['id_project'], $requested_data['creator_email'], 1]);
+        $requested_query->execute([$requested_data['id_project'], $requested_data['creator_email'], 1]);
 
-    $response = ($requested_query) ? new Response(false, "PROJECT_WERE_CREATE")
-        : new Response(true, "BAD_REQUEST_TO_DB");
-    return $response;
+        if(isset($response_project_id)){
+            return ["id_project" => $response_project_id, "proj_name" => $response_project_name];
+        }else{
+            return new Response(true, "BAD_REQUEST_TO_DB");
+        }
+        } catch (Exception $e){
+        return new Response(true, "BAD_REQUEST_TO_DB");
+    }
+
 }
 
 function get_project_list($conf, $data)
@@ -74,24 +103,41 @@ function get_project_list($conf, $data)
     return $response;
 }
 
-if (check_token($conf, $data)) {
-    if ($data['type'] === GET_PROJECT_LIST) {
+//if (check_token($conf, $data)) {
+//    if ($data['type'] === GET_PROJECT_LIST) {
+//
+//        $response = get_project_list($conf, $data);
+//
+//        header("Access-Control-Allow-Headers: X-Requested-With, content-type");
+//        header('Content-Type: application/json');
+//        echo json_encode($response);
+//        exit();
+//    } elseif ($data['type'] === CREATE_NEW_PROJECT) {
+//        header('Content-Type: application/json');
+//        $response = create_new_project($conf, $data);
+//        echo json_encode($response);
+//        exit();
+//    }
+//} else {
+//    http_response_code(401);
+//    echo json_encode(new Response(true, MUST_BE_AUTHORIZED));
+//}
 
-        $response = get_project_list($conf, $data);
+if ($data['type'] === GET_PROJECT_LIST) {
 
-        header("Access-Control-Allow-Headers: X-Requested-With, content-type");
-        header('Content-Type: application/json');
-        echo json_encode($response);
-        exit();
-    } elseif ($data['type'] === CREATE_NEW_PROJECT) {
-        header('Content-Type: application/json');
-        $response = create_new_project($conf, $data);
-        echo json_encode($response);
-        exit();
-    }
-}else{
-    http_response_code(401);
-    echo new Response(true, MUST_BE_AUTHORIZED);
+    $response = get_project_list($conf, $data);
+
+    header("Access-Control-Allow-Headers: X-Requested-With, content-type");
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit();
+} elseif ($data['type'] === CREATE_NEW_PROJECT) {
+    header('Content-Type: application/json');
+    $response = create_new_project($conf, $data);
+    echo json_encode($response);
+    exit();
 }
 
+http_response_code(401);
+echo json_encode(new Response(true, MUST_BE_AUTHORIZED));
 exit();

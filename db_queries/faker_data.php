@@ -30,7 +30,7 @@
 //    "test@mail.com",
 //    true
 //);');
-
+//
 // тестовый запрос!!!
 //select proj_name, id_project from Projects
 //where id_project = (

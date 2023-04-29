@@ -67,16 +67,23 @@ $query = $pdo->query('
         date_of_creating DATE NOT NULL,
         date_of_deadline DATE,
         contributor_email varchar(255),
-        PRIMARY KEY(id_note),
-        FOREIGN KEY(contributor_email) REFERENCES Users(email)
+        PRIMARY KEY(id_note)
 )');
-
 
 $query = $pdo->query('
     CREATE TABLE  IF NOT EXISTS Tokens (
         token varchar(64),
         date_of_creating DATE NOT NULL,
         PRIMARY KEY(token)
+)');
+
+$query = $pdo->query('
+    CREATE TABLE  IF NOT EXISTS Contributors_task_list (
+        id_note integer,
+        contributor_email varchar(255) NOT NULL,
+        PRIMARY KEY(id_note, contributor_email),
+        FOREIGN KEY(id_note) REFERENCES Notes(id_note),
+        FOREIGN KEY(contributor_email) REFERENCES Users(email)
 )');
 
 

@@ -23,6 +23,7 @@ $verificationPassword = $requested_data['password'] ?? '';
 
 if ($verificationEmail === $data['email'] and $verificationPassword === md5($data['password'])){
     setcookie('token', create_new_token($conf, $data), time() + 60);
+//    $_COOKIE['token'] = create_new_token($conf, $data);
     $response = new Response(false, "AUTH_DONE");
 }else{
     $response = new Response(true, "WRONG_PASS_OR_EMAIL");

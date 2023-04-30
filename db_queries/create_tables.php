@@ -49,7 +49,7 @@ $query = $pdo->query('
 
 $query = $pdo->query('
     CREATE TABLE  IF NOT EXISTS Components (
-        id_component integer,
+        id_component integer AUTO_INCREMENT,
         id_project integer NOT NULL,
         component_name varchar(32) NOT NULL,
         PRIMARY KEY(id_component),
@@ -66,7 +66,6 @@ $query = $pdo->query('
         full_text text,
         date_of_creating DATE NOT NULL,
         date_of_deadline DATE,
-        contributor_email varchar(255),
         PRIMARY KEY(id_note)
 )');
 
@@ -85,6 +84,16 @@ $query = $pdo->query('
         FOREIGN KEY(id_note) REFERENCES Notes(id_note),
         FOREIGN KEY(contributor_email) REFERENCES Users(email)
 )');
+
+$query = $pdo->query('
+    create trigger create_default_componets after insert on projects
+	for each row
+    insert into components (id_project, component_name)
+    values
+    (new.id_project, "to_do"),
+    (new.id_project, "in_progress"),
+    (new.id_project, "done");
+');
 
 
 //$query = $pdo->query('insert into users values ("ruslan_dopowehko@mail.ru", "Ruslan Khasanov", "Kn9Dm3^b4")');

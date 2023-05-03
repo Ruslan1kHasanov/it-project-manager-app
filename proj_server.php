@@ -207,7 +207,7 @@ function add_contributor($conf, $data): Response
             ');
             $requested_query->execute([$data['proj_id'], $data['contributor_email'], $data['is_admin']]);
 
-            return new Response(false, "USER_WAS_INVITED",json_encode(select_user_login_email($conf, $data['contributor_email'])));
+            return new Response(false, "USER_WAS_INVITED", json_encode(select_user_login_email($conf, $data['contributor_email'])));
         } else {
             return new Response(true, "USER_IS_NOT_EXIST");
         }

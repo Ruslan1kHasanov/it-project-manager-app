@@ -10,6 +10,8 @@ const MUST_BE_AUTHORIZED = "MUST_BE_AUTHORIZED";
 const CREATE_NEW_NOTE = "CREATE_NEW_NOTE";
 const CREATE_NEW_COLUMN = "CREATE_NEW_COLUMN";
 
+const INVITE_CONTRIBUTOR = "INVITE_CONTRIBUTOR";
+
 $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, JSON_UNESCAPED_UNICODE);
 $conf = new Config();
@@ -164,6 +166,41 @@ function create_new_column($conf, $data)
     }
 }
 
+function is_user_exists($conf, $user_email)
+{
+    $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;cahrset=$conf->charset", $conf->user, $conf->password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    $requested_query = $pdo->prepare('
+        select email from Users
+        where email = ?; 
+    ');
+
+    $requested_query->execute([$user_email]);
+    $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
+    return isset($requested_data['email']);
+}
+function add_contributor($conf, $data){
+    try {
+        $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;cahrset=$conf->charset", $conf->user, $conf->password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        if (is_user_exists($conf, $data['contributor_email'])){
+            $requested_query = $pdo->prepare('
+                insert into Projects_list
+                values(?, ?, ?);
+            ');
+            $requested_query->execute([$data['proj_id'], $data['contributor_email'], $data['is_admin']]);
+
+            return new Response(true, "USER_WAS_INVITED");
+        }else{
+            return new Response(true, "USER_IS_NOT_EXIST");
+        }
+    } catch (Exception $e) {
+        return new Response(true, $e);
+    }
+}
+
 //if (check_token($conf, $data)) {
 //    if ($data['type'] === GET_PROJECT_LIST) {
 //
@@ -184,27 +221,39 @@ function create_new_column($conf, $data)
 //    echo json_encode(new Response(true, MUST_BE_AUTHORIZED));
 //}
 
-if ($data['type'] === GET_PROJECT_LIST) {
-    $response = get_project_list($conf, $data);
-    header("Access-Control-Allow-Headers: X-Requested-With, content-type");
-    header('Content-Type: application/json');
-    echo json_encode($response);
-    exit();
-} elseif ($data['type'] === CREATE_NEW_PROJECT) {
-    header('Content-Type: application/json');
-    $response = create_new_project($conf, $data);
-    echo json_encode($response);
-    exit();
-} elseif ($data['type'] === GET_PROJECT_DATA) {
-    $response = get_project_data($conf, $data);
-    echo json_encode($response);
-    exit();
-} elseif ($data['type'] === CREATE_NEW_COLUMN){
-    $response = create_new_column($conf, $data);
-    echo json_encode($response);
-    exit();
+switch ($data['type']){
+    case GET_PROJECT_LIST: {
+        http_response_code(200);
+        $response = get_project_list($conf, $data);
+        break;
+    }
+    case CREATE_NEW_PROJECT: {
+        http_response_code(201);
+        $response = create_new_project($conf, $data);
+        break;
+    }
+    case GET_PROJECT_DATA: {
+        http_response_code(200);
+        $response = get_project_data($conf, $data);
+        break;
+    }
+    case CREATE_NEW_COLUMN: {
+        http_response_code(201);
+        $response = create_new_column($conf, $data);
+        break;
+    }
+    case INVITE_CONTRIBUTOR: {
+        http_response_code(201);
+        $response = add_contributor($conf, $data);
+        break;
+    }
+    default:{
+        http_response_code(400);
+        $response = new Response(true, "BAD_REQUEST_TO_SERVER");
+        break;
+    }
 }
 
-http_response_code(401);
-echo json_encode(new Response(true, "no selected type"));
+header('Content-Type: application/json; charset=utf-8');
+echo json_encode($response);
 exit();

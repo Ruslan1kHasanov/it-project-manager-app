@@ -94,8 +94,23 @@ function get_project_data($conf, $data)
 
         $requested_data = $requested_query->fetchAll(PDO::FETCH_ASSOC);
 
+        $proj_columns_list = $requested_data;
+
+        $requested_query = $pdo->prepare('
+            select contributor_email, users.login
+            from projects_list left join users on projects_list.contributor_email = users.email
+            where projects_list.id_project = ?;'
+        );
+        $requested_query->execute([$data['proj_id']]);
+
+        $requested_data = $requested_query->fetchAll(PDO::FETCH_ASSOC);
+
+        $proj_contributors_list = $requested_data;
+
+        $response_data = ["column_list" => $proj_columns_list, "contributors_list" => $proj_contributors_list];
+
         if (array_key_exists(0, $requested_data)) {
-            return ["column_list" => $requested_data];
+            return new Response(false, "REQUEST_DONE", json_encode($response_data));
         } else {
             return new Response(true, "BAD_REQUEST_TO_DB");
         }

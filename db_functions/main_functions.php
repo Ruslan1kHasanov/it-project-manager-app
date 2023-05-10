@@ -1,26 +1,16 @@
 <?php
 
+require_once "db_functions.php";
+
 // fix it
 global $conf;
+try {
+    $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;charset=$conf->charset", $conf->user, $conf->password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (Exception $exception) {
 
-$pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;charset=$conf->charset", $conf->user, $conf->password);
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-function is_user_project_exists($data): bool
-{
-    global $pdo;
-
-    $requested_query = $pdo->prepare('
-        select proj_name, creator_email from Projects
-        where proj_name = ? and creator_email = ?;'
-    );
-    $requested_query->execute([$data['proj_name'], $data['creator_email']]);
-    $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
-
-    if (gettype($requested_data) === "boolean") {
-        return false;
-    }
-    return true;
+//    log it
+    echo $exception;
 }
 
 function create_new_project($data)
@@ -50,8 +40,8 @@ function create_new_project($data)
         $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
 
         $requested_query = $pdo->prepare('
-        insert into Projects_list
-        values (?, ?, ?);'
+            insert into Projects_list
+            values (?, ?, ?);'
         );
 
 //    print_r($requested_data);
@@ -167,20 +157,6 @@ function create_new_column($data)
     }
 }
 
-function is_user_exists($user_email): bool
-{
-    global $pdo;
-
-    $requested_query = $pdo->prepare('
-        select email from Users
-        where email = ?; 
-    ');
-
-    $requested_query->execute([$user_email]);
-    $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
-    return isset($requested_data['email']);
-}
-
 function select_user_login_by_email($user_email)
 {
     global $pdo;
@@ -214,4 +190,24 @@ function add_contributor($data): Response
     }
 }
 
-//function
+function add_note($data): Response
+{
+    global $pdo;
+
+    try {
+        if (is_user_belongs_to_project($data['contributor_email'], $data['proj_id'])) {
+            $requested_query = $pdo->prepare('
+                insert into Notes (id_component, sub_project_name, creator_email, short_text, full_text, date_of_creating, date_of_deadline)
+                values(?, ?, ?, ?, ?);
+            ');
+
+            $requested_query->execute([$data['id_component'], $data['sub_project_name'], $data['creator_email'],
+                $data['short_text'], $data['full_text'], date('Y-m-d'),$data['date_of_creating']]);
+
+            return new Response(false, "NOTE_WERE_CREATED");
+        }
+        return new Response(true, "USER_NOT_BELONGS_TO_CURRENT_PROJECT");
+    }catch (Exception $exception){
+        return new Response(true, $exception);
+    }
+}

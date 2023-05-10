@@ -2,9 +2,10 @@
 
 require_once './Entities/Response.php';
 require_once './tested.php';
-require_once  './db_functions/main_functions.php';
+require_once './db_functions/main_functions.php';
 require_once 'config.php';
 
+$conf = new Config();
 const GET_PROJECT_LIST = "GET_PROJECT_LIST";
 const GET_PROJECT_DATA = "GET_PROJECT_DATA";
 const CREATE_NEW_PROJECT = "CREATE_NEW_PROJECT";
@@ -15,7 +16,6 @@ const INVITE_CONTRIBUTOR = "INVITE_CONTRIBUTOR";
 
 $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, JSON_UNESCAPED_UNICODE);
-$conf = new Config();
 
 //if (check_token($conf, $data)) {
 //    if ($data['type'] === GET_PROJECT_LIST) {
@@ -68,9 +68,10 @@ switch ($data['type']) {
         $response = add_contributor($data);
         break;
     }
-    case CREATE_NEW_NOTE: {
+    case CREATE_NEW_NOTE:
+    {
         http_response_code(201);
-//        $response = add_contributor($conf, $data);
+        $response = add_note($data);
         break;
     }
     default:

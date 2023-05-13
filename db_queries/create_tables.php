@@ -58,7 +58,7 @@ $query = $pdo->query('
 
 $query = $pdo->query('
     CREATE TABLE  IF NOT EXISTS Notes (
-        id_note integer,
+        id_note integer AUTO_INCREMENT,
         id_component integer NOT NULL,
         sub_project_name varchar(255),
         creator_email varchar(255) NOT NULL,

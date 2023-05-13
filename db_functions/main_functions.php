@@ -87,13 +87,32 @@ function get_project_data($data): Response
 
         $proj_contributors_list = $requested_data;
 
-        $response_data = ["column_list" => $proj_columns_list, "contributors_list" => $proj_contributors_list];
+        $requested_query = $pdo->prepare('
+            select * from Notes
+            where Notes.id_component in (
+                select Components.id_component from Components
+                where Components.id_project = ?
+            )'
+        );
+        $requested_query->execute([$data['proj_id']]);
+        $requested_data = $requested_query->fetchAll(PDO::FETCH_ASSOC);
+        $proj_notes = $requested_data;
 
-        if (array_key_exists(0, $requested_data)) {
-            return new Response(false, "REQUEST_DONE", json_encode($response_data));
-        } else {
-            return new Response(true, "BAD_REQUEST_TO_DB");
-        }
+        $response_data = [
+            "column_list" => $proj_columns_list,
+            "contributors_list" => $proj_contributors_list,
+            "notes_list" => $proj_notes
+        ];
+
+//        print_r($response_data);
+
+        return new Response(false, "REQUEST_DONE", json_encode($response_data));
+
+//        if (array_key_exists(0, $requested_data)) {
+//            return new Response(false, "REQUEST_DONE", json_encode($response_data));
+//        } else {
+//            return new Response(true, "BAD_REQUEST_TO_DB");
+//        }
 
     } catch (Exception $e) {
         return new Response(true, $e);
@@ -195,19 +214,69 @@ function add_note($data): Response
     global $pdo;
 
     try {
-        if (is_user_belongs_to_project($data['contributor_email'], $data['proj_id'])) {
+        if (is_user_belongs_to_project($data['creator_email'], $data['proj_id'])) {
             $requested_query = $pdo->prepare('
                 insert into Notes (id_component, sub_project_name, creator_email, short_text, full_text, date_of_creating, date_of_deadline)
-                values(?, ?, ?, ?, ?);
+                values(?, ?, ?, ?, ?, ?, ?);
             ');
 
             $requested_query->execute([$data['id_component'], $data['sub_project_name'], $data['creator_email'],
-                $data['short_text'], $data['full_text'], date('Y-m-d'),$data['date_of_creating']]);
+                $data['short_text'], $data['full_text'], date('Y-m-d'), $data['date_of_creating']]);
 
-            return new Response(false, "NOTE_WERE_CREATED");
+//            select last (current) note id
+            $requested_query = $pdo->prepare('
+                select max(id_note) as id_note from Notes;
+            ');
+            $requested_query->execute();
+
+            $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
+            $is_attached = attach_users_to_note($data, $requested_data['id_note']);
+
+            if ($is_attached->error) {
+                return $is_attached;
+            }
+
+            return new Response(false, "NOTE_WERE_CREATED",);
         }
         return new Response(true, "USER_NOT_BELONGS_TO_CURRENT_PROJECT");
-    }catch (Exception $exception){
+    } catch (Exception $exception) {
+        return new Response(true, $exception);
+    }
+}
+
+function attach_users_to_note($data, $id_note): Response
+{
+    global $pdo;
+
+    $inserted_contrib_email = [];
+    $wrong_contrib_email = [];
+
+    $is_inserting_contributor_error = false;
+
+    for ($i = 0; $i < sizeof($data['contributors_email']); $i++) {
+        if (is_user_belongs_to_project($data['contributors_email'][$i], $data['proj_id'])) {
+            $inserted_contrib_email[] = $data['contributors_email'][$i];
+        } else {
+            $is_inserting_contributor_error = true;
+            $wrong_contrib_email[] = $data['contributors_email'][$i];
+        }
+    }
+
+    if ($is_inserting_contributor_error) {
+        return new Response(true, "CONTRIBUTORS_NOT_BELONG_TO_PROJ_ERROR", json_encode($wrong_contrib_email));
+    }
+
+    $multiply_sql_insert_string = '';
+    foreach ($inserted_contrib_email as $email) {
+        $multiply_sql_insert_string = $multiply_sql_insert_string . '(' . '"' . $email . '"' . ', ' . $id_note . '),';
+    }
+    $multiply_sql_insert_string = rtrim($multiply_sql_insert_string, ',');
+    $multiply_sql_insert_string = 'insert into Contributors_task_list (contributor_email, id_note) values ' . $multiply_sql_insert_string;
+
+    try {
+        $pdo->prepare($multiply_sql_insert_string)->execute();
+        return new Response(false, "tmp");
+    } catch (Exception $exception) {
         return new Response(true, $exception);
     }
 }

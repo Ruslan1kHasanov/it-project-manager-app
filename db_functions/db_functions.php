@@ -37,10 +37,10 @@ function is_user_belongs_to_project($user_email, $id_project): bool
 
     $requested_query = $pdo->prepare('
         select contributor_email from Projects_list
-        where id_project = ?; 
+        where id_project = ? and contributor_email = ?; 
     ');
 
-    $requested_query->execute([$id_project]);
+    $requested_query->execute([$id_project, $user_email]);
     $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
-    return isset($requested_data['email']);
+    return isset($requested_data['contributor_email']);
 }

@@ -4,6 +4,7 @@ require_once "db_functions.php";
 
 // fix it
 global $conf;
+
 try {
     $pdo = new PDO("mysql:host=$conf->host;dbname=$conf->db;charset=$conf->charset", $conf->user, $conf->password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -98,13 +99,14 @@ function get_project_data($data): Response
         $requested_data = $requested_query->fetchAll(PDO::FETCH_ASSOC);
         $proj_notes = $requested_data;
 
+        $proj_note_contributors_list[] = select_note_contributors_list($data['proj_id']);
+
         $response_data = [
             "column_list" => $proj_columns_list,
             "contributors_list" => $proj_contributors_list,
-            "notes_list" => $proj_notes
+            "notes_list" => $proj_notes,
+            "proj_note_contributors_list" => $proj_note_contributors_list
         ];
-
-//        print_r($response_data);
 
         return new Response(false, "REQUEST_DONE", json_encode($response_data));
 
@@ -280,3 +282,4 @@ function attach_users_to_note($data, $id_note): Response
         return new Response(true, $exception);
     }
 }
+

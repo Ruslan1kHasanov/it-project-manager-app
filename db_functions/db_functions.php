@@ -44,3 +44,27 @@ function is_user_belongs_to_project($user_email, $id_project): bool
     $requested_data = $requested_query->fetch(PDO::FETCH_ASSOC);
     return isset($requested_data['contributor_email']);
 }
+
+function select_note_contributors_list($id_note)
+{
+    global $pdo;
+
+    $requested_query = $pdo->prepare('
+        select Users.email, Users.login, Contributors_task_list.id_note
+        from Users join Contributors_task_list 
+        on Users.email = Contributors_task_list.contributor_email
+        where Contributors_task_list.id_note in (
+            select Notes.id_note
+            from Notes
+            where Notes.id_component in (
+                select Components.id_component
+                from Components
+                where Components.id_project = ?
+            )
+        );
+    ');
+
+    $requested_query->execute([$id_note]);
+
+    return $requested_query->fetchAll(PDO::FETCH_ASSOC);
+}

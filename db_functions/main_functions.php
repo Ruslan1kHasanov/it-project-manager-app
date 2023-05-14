@@ -101,20 +101,21 @@ function get_project_data($data): Response
 
         $proj_note_contributors_list[] = select_note_contributors_list($data['proj_id']);
 
+        for ($i = 0; $i < sizeof($proj_notes); $i++) {
+            for ($j = 0; $j < sizeof($proj_note_contributors_list[0]); $j++) {
+                if ($proj_note_contributors_list[0][$j]['id_note'] === $proj_notes[$i]['id_note']) {
+                    $proj_notes[$i]['developers_array'][] = $proj_note_contributors_list[0][$j];
+                }
+            }
+        }
+
         $response_data = [
             "column_list" => $proj_columns_list,
             "contributors_list" => $proj_contributors_list,
-            "notes_list" => $proj_notes,
-            "proj_note_contributors_list" => $proj_note_contributors_list
+            "notes_list" => $proj_notes
         ];
 
         return new Response(false, "REQUEST_DONE", json_encode($response_data));
-
-//        if (array_key_exists(0, $requested_data)) {
-//            return new Response(false, "REQUEST_DONE", json_encode($response_data));
-//        } else {
-//            return new Response(true, "BAD_REQUEST_TO_DB");
-//        }
 
     } catch (Exception $e) {
         return new Response(true, $e);

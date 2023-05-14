@@ -66,6 +66,7 @@ $query = $pdo->query('
         full_text text,
         date_of_creating DATE NOT NULL,
         date_of_deadline DATE,
+        priority varchar(127),
         PRIMARY KEY(id_note)
 )');
 

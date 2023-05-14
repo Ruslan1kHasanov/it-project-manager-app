@@ -219,12 +219,12 @@ function add_note($data): Response
     try {
         if (is_user_belongs_to_project($data['creator_email'], $data['proj_id'])) {
             $requested_query = $pdo->prepare('
-                insert into Notes (id_component, sub_project_name, creator_email, short_text, full_text, date_of_creating, date_of_deadline)
-                values(?, ?, ?, ?, ?, ?, ?);
+                insert into Notes (id_component, sub_project_name, creator_email, short_text, full_text, date_of_creating, date_of_deadline, priority)
+                values(?, ?, ?, ?, ?, ?, ?, ?);
             ');
 
             $requested_query->execute([$data['id_component'], $data['sub_project_name'], $data['creator_email'],
-                $data['short_text'], $data['full_text'], date('Y-m-d'), $data['date_of_creating']]);
+                $data['short_text'], $data['full_text'], date('Y-m-d'), $data['date_of_creating'], $data['priority']]);
 
 //            select last (current) note id
             $requested_query = $pdo->prepare('
